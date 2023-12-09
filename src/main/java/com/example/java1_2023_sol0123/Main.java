@@ -12,6 +12,7 @@ import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
+import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;
 import javafx.stage.Stage;
 
@@ -24,6 +25,9 @@ public class Main extends Application {
 
     private HashMap<KeyCode, Boolean> keys = new HashMap<KeyCode, Boolean>();
     private ArrayList<Node> platforms = new ArrayList<>();
+    private ArrayList<Node> coins = new ArrayList<>();
+    private boolean dialogEvent = false, running = true;
+
     private Pane appRoot = new Pane();
     private Pane gameRoot = new Pane();
     private Pane uiRoot = new Pane();
@@ -45,6 +49,10 @@ public class Main extends Application {
                     case '1':
                         Node platform = createEntity(j*60, i *60, 60, 60, Color.GREEN);
                         platforms.add(platform);
+                        break;
+                    case '2':
+                        Node coin = createEntity(j*60,i*60,30,30,Color.WHITE);
+                        coins.add(coin);
                         break;
                 }
             }
