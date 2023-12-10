@@ -14,19 +14,22 @@ import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;
+import javafx.scene.text.Font;
 import javafx.stage.Stage;
 
 import java.io.IOException;
 import java.security.Key;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 
 public class Main extends Application {
 
     private HashMap<KeyCode, Boolean> keys = new HashMap<KeyCode, Boolean>();
     private ArrayList<Node> platforms = new ArrayList<>();
     private ArrayList<Node> coins = new ArrayList<>();
-    private boolean dialogEvent = false, running = true;
+    private boolean running = true;
+    private boolean gameOver = false;
 
     private Pane appRoot = new Pane();
     private Pane gameRoot = new Pane();
@@ -35,14 +38,16 @@ public class Main extends Application {
     private Node player;
     private Point2D playerVelocity = new Point2D(0, 0);
     private boolean canJump = true;
-    private int levelWidth;
+    private int levelWidth = 1280;
+    private int levelHeight = 720;
+    private int score = 0;
+    Level level = new Level();
     private void initContent(){
-        Rectangle bg = new Rectangle(1280, 720);
-        levelWidth = Level.LEVEL1[0].length() * 60;
+        Rectangle bg = new Rectangle(levelWidth, levelHeight);
 
-        for (int i=0; i< Level.LEVEL1.length; i++){
-            String line = Level.LEVEL1[i];
-            for (int j=0; j <line.length();j++){
+        for (int i = 0; i < level.levelList.size(); i++){
+            String line = level.levelList.get(i);
+            for (int j = 0; j < line.length();j++){
                 switch (line.charAt(j)){
                     case '0':
                         break;
@@ -57,11 +62,11 @@ public class Main extends Application {
                 }
             }
         }
-        player = createEntity(0, 600, 40, 40, Color.BLUE);
+        player = createEntity(0, 600, 40, 40, Color.YELLOW);
 
         appRoot.getChildren().addAll(bg, gameRoot, uiRoot);
     }
-    private void update(){
+    private void update(GraphicsContext gc){
         if (isPressed(KeyCode.W) && player.getTranslateY() >= 5){
             jumpPlayer();
         }
@@ -75,12 +80,51 @@ public class Main extends Application {
             playerVelocity = playerVelocity.add(0, 1);
         }
         movePlayerY((int)playerVelocity.getY());
+
+        for (Node coin : coins){
+            if(player.getBoundsInParent().intersects(coin.getBoundsInParent())){
+                coin.getProperties().put("exists",false);
+            }
+        }
+        for (Iterator<Node> it = coins.iterator();it.hasNext();){
+            Node coin = it.next();
+            if(!(Boolean)coin.getProperties().get("exists")){
+                it.remove();
+                score += 1;
+                gc.clearRect(0,0,levelWidth,levelHeight);
+                gameRoot.getChildren().remove(coin);
+            }
+        }
+
+        if(score == 12){
+            gc.setFill(Color.GOLD);
+            gc.setFont(new Font("", 50));
+            gc.fillText("YOU WON!", levelWidth/2-100, levelHeight/2-50);
+            running = false;
+            return;
+        }
+
+        if (gameOver) {
+            gc.setFill(Color.RED);
+            gc.setFont(new Font("", 50));
+            gc.fillText("GAME OVER", levelWidth/2-100, levelHeight/2-50);
+            running = false;
+            return;
+        }
+
+        gc.setFill(Color.WHITE);
+        gc.setFont(new Font("", 30));
+        gc.fillText("Score: " + score, 10, 30);
+
     }
 
 
     private void movePlayerX(int value){
         boolean movingRight = value > 0;
         for (int i=0; i < Math.abs(value);i++){
+            if(player.getTranslateX() < 0 || player.getTranslateX() > levelWidth) {
+                return;
+            }
             for (Node platform : platforms){
                 if(player.getBoundsInParent().intersects(platform.getBoundsInParent())){
                     if(movingRight){
@@ -100,6 +144,13 @@ public class Main extends Application {
     private void movePlayerY(int value){
         boolean movingDown = value > 0;
         for (int i=0; i < Math.abs(value);i++){
+            if(player.getTranslateY() < 0) {
+                return;
+            }
+            if(player.getTranslateY() + 40 >= levelHeight){
+                gameOver = true;
+                return;
+            }
             for (Node platform : platforms){
                 if(player.getBoundsInParent().intersects(platform.getBoundsInParent())){
                     if(movingDown){
@@ -128,6 +179,8 @@ public class Main extends Application {
         entity.setTranslateX(x);
         entity.setTranslateY(y);
         entity.setFill(color);
+        entity.getProperties().put("exists",true); //V classe dát jako .isAlive / .setAlive
+
         gameRoot.getChildren().add(entity);
         return entity;
 
@@ -145,17 +198,22 @@ public class Main extends Application {
         primaryStage.setTitle("Chuckie egg");
         primaryStage.setScene(scene);
         primaryStage.show();
+        Canvas c = new Canvas(levelWidth, levelHeight);
+        GraphicsContext gc = c.getGraphicsContext2D();
+        gameRoot.getChildren().add(c);
+
 
         AnimationTimer timer = new AnimationTimer() {
             @Override
             public void handle(long now) {
-                update();
+                if(running){
+                    update(gc);
+                }
             }
         };
         timer.start();
     }
     public static void main(String[] args) {
-
         launch(args);
     }
 }

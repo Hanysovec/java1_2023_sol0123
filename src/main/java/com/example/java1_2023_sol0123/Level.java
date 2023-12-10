@@ -1,18 +1,30 @@
 package com.example.java1_2023_sol0123;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.util.ArrayList;
+import java.util.Scanner;
+
 public class Level {
-    public static final String[] LEVEL1 = new String[] {
-            "000000000000000000000000000000",
-            "000000000000000000000000000000",
-            "000000000000000000000000000000",
-            "000000000000000000000000000000",
-            "000000000000000000000000000000",
-            "000000000000000000000000000000",
-            "000000000000000000000000000000",
-            "000111000200000000000000000000",
-            "000000001110000000000000000000",
-            "000002000000011100002000000000",
-            "000001110011100000011100011000",
-            "111111110011110001111100111111"
-    };
+    private String levelName = "./src/main/resources/com/example/java1_2023_sol0123/LEVEL1.txt";
+    public ArrayList<String> levelList = new ArrayList<String>();
+    public Level(){
+        loadLevel();
+    }
+
+    public void loadLevel(){
+        try{
+            File file = new File(levelName);
+            Scanner scan = new Scanner(file);
+            while(scan.hasNextLine()){
+                String line = scan.nextLine();
+                levelList.add(line);
+            }
+            scan.close();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
+
 }
